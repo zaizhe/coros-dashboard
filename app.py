@@ -112,13 +112,40 @@ with col2:
 
 st.divider()
 
-# --- 详细活动列表 (使用 Tabs 切换视图) ---
+# --- 详细活动列表 (移动端优化版：可点击展开) ---
+st.subheader("📅 详细跑步记录")
 tab1, tab2 = st.tabs([f"{USER_A_NAME} 的动态", f"{USER_B_NAME} 的动态"])
 
+# 提取出一个专门用来画列表的函数，让代码更干净
+def draw_activity_feed(df):
+    if df.empty:
+        st.info("暂无数据")
+        return
+        
+    # 逐行遍历表格数据
+    for index, row in df.iterrows():
+        # 1. 列表封面：展示日期、距离和名称
+        title = f"🏃 {row['距离(km)']} km | {row['日期']} | {row['运动名称']}"
+        
+        # 2. 点击展开后的内部视图
+        with st.expander(label=title):
+            # 将详情分成三列展示，类似手机上的数据卡片
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("平均配速", row['配速'])
+            with c2:
+                st.metric("平均心率", f"{row['平均心率']} bpm")
+            with c3:
+                st.metric("体能负荷", row['负荷'])
+            
+            # 进阶占位：你甚至可以在这里加个进度条来评估强度
+            if row['平均心率'] > 150:
+                st.warning("🔥 这次跑得有点猛哦！注意休息。")
+            elif row['平均心率'] > 0:
+                st.success("🍃 轻松有氧，状态不错。")
+
 with tab1:
-    if not df_a.empty:
-        st.dataframe(df_a[['日期', '运动名称', '距离(km)', '配速', '平均心率']], width='stretch')
+    draw_activity_feed(df_a)
 
 with tab2:
-    if not df_b.empty:
-        st.dataframe(df_b[['日期', '运动名称', '距离(km)', '配速', '平均心率']], width='stretch')
+    draw_activity_feed(df_b)
